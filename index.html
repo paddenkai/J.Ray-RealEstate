@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CMA Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --cream: #F8F5F0;
+    --warm-white: #FDFCFA;
+    --charcoal: #1C1C1E;
+    --mid: #6B6B6B;
+    --light: #B0ADA8;
+    --border: #E2DED8;
+    --accent: #C17F3E;
+    --accent-light: #F5EDE0;
+    --green: #2D6A4F;
+    --green-light: #E8F3EE;
+    --red: #9B2335;
+    --red-light: #F5E8EA;
+    --card-shadow: 0 1px 3px rgba(28,28,30,0.06), 0 4px 16px rgba(28,28,30,0.04);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--charcoal);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--charcoal);
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    color: #fff;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  .header-logo span { color: var(--accent); }
+  .header-sub { font-size: 12px; color: rgba(255,255,255,0.4); letter-spacing: 0.05em; text-transform: uppercase; }
+
+  /* LAYOUT */
+  .container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+  /* MODE TABS */
+  .mode-tabs { display: flex; gap: 0; margin-bottom: 2rem; background: #fff; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .mode-tab {
+    flex: 1; padding: 12px 20px; border: none; background: transparent;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 400;
+    color: var(--mid); cursor: pointer; transition: all 0.2s;
+    border-right: 1px solid var(--border); letter-spacing: 0.01em;
+  }
+  .mode-tab:last-child { border-right: none; }
+  .mode-tab.active { background: var(--charcoal); color: #fff; font-weight: 500; }
+
+  /* CARDS */
+  .card {
+    background: var(--warm-white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+    box-shadow: var(--card-shadow);
+  }
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 1.25rem;
+    color: var(--charcoal);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+  /* FORM */
+  .field-group { display: grid; gap: 12px; margin-bottom: 12px; }
+  .cols-2 { grid-template-columns: 1fr 1fr; }
+  .cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+  label { display: block; font-size: 11px; font-weight: 500; color: var(--mid); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 5px; }
+
+  input[type="text"],
+  input[type="number"],
+  textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--charcoal);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus, textarea:focus { border-color: var(--accent); }
+  input::placeholder, textarea::placeholder { color: var(--light); }
+  textarea { resize: vertical; line-height: 1.5; }
+
+  /* PASTE IMPORT */
+  .paste-toggle {
+    font-size: 12px; color: var(--accent); background: none; border: none;
+    cursor: pointer; padding: 0; font-family: 'DM Sans', sans-serif;
+    text-decoration: underline; text-underline-offset: 2px; margin-bottom: 8px; display: block;
+  }
+  .paste-area-wrap { display: none; margin-bottom: 12px; }
+  .paste-area-wrap.open { display: block; }
+  .paste-hint { font-size: 11px; color: var(--light); margin-bottom: 6px; line-height: 1.5; }
+  .paste-row { display: flex; gap: 8px; align-items: flex-start; }
+  .paste-row textarea { flex: 1; font-size: 12px; min-height: 72px; }
+  .btn-fetch {
+    padding: 9px 14px; white-space: nowrap;
+    border: 1px solid var(--border); border-radius: 7px;
+    background: transparent; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
+    color: var(--mid); transition: all 0.15s; flex-shrink: 0;
+  }
+  .btn-fetch:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+  .btn-fetch:disabled { opacity: 0.4; cursor: not-allowed; }
+  .fetch-status { font-size: 11px; margin-bottom: 10px; padding: 6px 10px; border-radius: 6px; display: none; }
+  .fetch-status.ok { background: var(--green-light); color: var(--green); display: block; }
+  .fetch-status.err { background: var(--red-light); color: var(--red); display: block; }
+  .fetch-status.loading { background: var(--accent-light); color: var(--accent); display: block; }
+  .url-divider { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .url-divider-line { flex: 1; height: 1px; background: var(--border); }
+  .url-divider-text { font-size: 10px; color: var(--light); letter-spacing: 0.05em; text-transform: uppercase; }
+
+  /* COMPS */
+  .comp-item {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin-bottom: 10px;
+    position: relative;
+    transition: border-color 0.15s;
+  }
+  .comp-item:hover { border-color: #ccc; }
+  .comp-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  .comp-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 13px; color: var(--accent); font-weight: 500;
+  }
+  .comp-ppsf {
+    font-size: 12px; color: var(--mid);
+    background: var(--accent-light);
+    padding: 3px 10px; border-radius: 20px;
+  }
+  .comp-actions { display: flex; gap: 6px; align-items: center; }
+  .btn-icon {
+    width: 28px; height: 28px; border-radius: 6px;
+    border: 1px solid var(--border); background: transparent;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: var(--mid); transition: all 0.15s;
+  }
+  .btn-icon:hover { background: var(--cream); }
+  .btn-icon.danger:hover { background: var(--red-light); border-color: var(--red); color: var(--red); }
+
+  .add-comp-btn {
+    width: 100%; padding: 11px;
+    border: 1px dashed var(--border); border-radius: 10px;
+    background: transparent; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--mid);
+    transition: all 0.2s; margin-top: 4px;
+  }
+  .add-comp-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+
+  /* CSV */
+  .csv-zone {
+    border: 1px dashed var(--border); border-radius: 10px;
+    padding: 1.25rem; text-align: center; cursor: pointer;
+    transition: all 0.2s; background: #fff;
+  }
+  .csv-zone:hover, .csv-zone.dragover { border-color: var(--accent); background: var(--accent-light); }
+  .csv-zone p { font-size: 13px; color: var(--mid); margin-bottom: 4px; }
+  .csv-zone small { font-size: 11px; color: var(--light); }
+  #csv-input { display: none; }
+
+  /* BUTTONS */
+  .btn-primary {
+    width: 100%; padding: 14px;
+    background: var(--charcoal); color: #fff;
+    border: none; border-radius: 10px; cursor: pointer;
+    font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 500;
+    letter-spacing: 0.02em;
+    transition: all 0.2s; margin-top: 1rem;
+  }
+  .btn-primary:hover { background: #2d2d30; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-secondary {
+    padding: 9px 16px;
+    background: transparent; color: var(--mid);
+    border: 1px solid var(--border); border-radius: 7px; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: 12px;
+    transition: all 0.15s;
+  }
+  .btn-secondary:hover { background: var(--cream); color: var(--charcoal); }
+
+  /* RESULT */
+  .result-section { display: none; }
+  .result-section.show { display: block; }
+
+  .divider {
+    border: none; border-top: 1px solid var(--border); margin: 1.5rem 0;
+  }
+
+  .price-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 1.25rem; }
+  .price-cell {
+    border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem;
+    text-align: center; background: #fff;
+  }
+  .price-cell.featured {
+    border-color: var(--accent); background: var(--accent-light);
+  }
+  .price-cell-label { font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mid); margin-bottom: 6px; }
+  .price-cell.featured .price-cell-label { color: var(--accent); }
+  .price-cell-val { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 500; color: var(--charcoal); }
+
+  .insights-list { margin: 0; padding: 0; list-style: none; }
+  .insights-list li {
+    padding: 8px 0 8px 16px; border-bottom: 1px solid var(--border);
+    font-size: 13px; color: var(--charcoal); position: relative;
+  }
+  .insights-list li:last-child { border-bottom: none; }
+  .insights-list li::before {
+    content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+    width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+  }
+
+  .narrative-text {
+    font-size: 14px; line-height: 1.85; color: var(--charcoal);
+    font-weight: 300;
+  }
+  .narrative-text p { margin-bottom: 1rem; }
+  .narrative-text p:last-child { margin-bottom: 0; }
+
+  .result-actions { display: flex; gap: 10px; margin-top: 1.25rem; }
+
+  /* LOADING */
+  .loading-wrap { text-align: center; padding: 2rem; }
+  .spinner {
+    width: 28px; height: 28px; border: 2px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin 0.7s linear infinite; margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-wrap p { font-size: 13px; color: var(--mid); }
+
+  /* PRINT */
+  .print-header { display: none; }
+  @media print {
+    .header, .mode-tabs, .input-section, .btn-primary, .result-actions, .add-comp-btn, .csv-section { display: none !important; }
+    .print-header { display: block; margin-bottom: 1.5rem; }
+    .print-header h1 { font-family: 'Playfair Display', serif; font-size: 22px; }
+    .print-header p { font-size: 12px; color: #666; }
+    body { background: #fff; }
+    .result-section { display: block !important; }
+    .card { box-shadow: none; border: 1px solid #ddd; }
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 600px) {
+    .cols-2, .cols-3, .cols-4 { grid-template-columns: 1fr 1fr; }
+    .price-grid { grid-template-columns: 1fr; }
+    .container { padding: 1rem 1rem 3rem; }
+  }
+  @media (max-width: 400px) {
+    .cols-2, .cols-3, .cols-4 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-logo">CMA <span>Tool</span></div>
+    <div class="header-sub">Comparative Market Analysis</div>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <button class="btn-secondary" onclick="clearAll()" style="font-size:12px;">Clear all</button>
+    <button class="btn-secondary" onclick="window.print()" style="font-size:12px;">Print / Save PDF</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="print-header">
+    <h1>Comparative Market Analysis</h1>
+    <p id="print-date"></p>
+  </div>
+
+  <!-- MODE TABS -->
+  <div class="mode-tabs">
+    <button class="mode-tab active" id="tab-quick" onclick="setMode('quick')">Quick comps analysis</button>
+    <button class="mode-tab" id="tab-full" onclick="setMode('full')">Full listing presentation</button>
+  </div>
+
+  <div class="input-section">
+
+    <!-- SUBJECT PROPERTY (full mode only) -->
+    <div class="card" id="subject-card" style="display:none;">
+      <div class="card-title"><div class="card-title-dot"></div>Subject property</div>
+      <div class="field-group cols-2">
+        <div><label>Address</label><input type="text" id="sub-address" placeholder="123 Pacific Coast Hwy, Malibu, CA" /></div>
+        <div><label>Target list price</label><input type="text" id="sub-price" placeholder="$1,200,000" /></div>
+      </div>
+      <div class="field-group cols-4">
+        <div><label>Sq ft</label><input type="number" id="sub-sqft" placeholder="2,400" /></div>
+        <div><label>Beds</label><input type="number" id="sub-beds" placeholder="4" /></div>
+        <div><label>Baths</label><input type="number" id="sub-baths" placeholder="2.5" /></div>
+        <div><label>Year built</label><input type="number" id="sub-year" placeholder="2005" /></div>
+      </div>
+      <div class="field-group">
+        <div><label>Property notes (condition, upgrades, views, etc.)</label>
+          <textarea id="sub-notes" rows="2" placeholder="Renovated kitchen 2023, ocean views, 2-car garage, corner lot..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPS -->
+    <div class="card">
+      <div class="card-title" style="justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:8px;"><div class="card-title-dot"></div>Comparable sales</div>
+        <span style="font-size:11px;color:var(--light);" id="comp-count-label">0 comps</span>
+      </div>
+
+      <div id="comps-list"></div>
+      <button class="add-comp-btn" onclick="addComp()">+ Add comparable sale</button>
+    </div>
+
+    <!-- CSV IMPORT -->
+    <div class="card csv-section">
+      <div class="card-title"><div class="card-title-dot"></div>Import from MLS export (CSV)</div>
+      <div class="csv-zone" id="csv-zone" onclick="document.getElementById('csv-input').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+        <p>Drop your MLS CSV file here, or click to browse</p>
+        <small>Columns recognized: address, price, sqft (or sq_ft), beds (or bedrooms), baths (or bathrooms), dom, date, notes</small>
+      </div>
+      <input type="file" id="csv-input" accept=".csv" onchange="handleCSV(event)" />
+    </div>
+
+    <button class="btn-primary" id="run-btn" onclick="runAnalysis()">Analyze comps →</button>
+  </div>
+
+  <!-- RESULT -->
+  <div class="result-section" id="result-section">
+    <div class="card" id="loading-card">
+      <div class="loading-wrap">
+        <div class="spinner"></div>
+        <p id="loading-msg">Analyzing comparables...</p>
+      </div>
+    </div>
+
+    <div id="result-cards" style="display:none;">
+
+      <div class="card">
+        <div class="card-title"><div class="card-title-dot"></div>Suggested price range</div>
+        <div class="price-grid" id="price-grid"></div>
+        <div class="divider"></div>
+        <div class="card-title" style="margin-bottom:0.75rem;"><div class="card-title-dot"></div>Key market insights</div>
+        <ul class="insights-list" id="insights-list"></ul>
+      </div>
+
+      <div class="card" id="narrative-card">
+        <div class="card-title"><div class="card-title-dot"></div><span id="narrative-title">Analysis summary</span></div>
+        <div class="narrative-text" id="narrative-text"></div>
+        <div class="result-actions">
+          <button class="btn-secondary" onclick="copyNarrative()">Copy narrative</button>
+          <button class="btn-secondary" onclick="window.print()">Print / Save PDF</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+let mode = 'quick';
+let compId = 0;
+let compIds = [];
+
+const STORAGE_KEY = 'cma_session';
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('tab-quick').classList.toggle('active', m === 'quick');
+  document.getElementById('tab-full').classList.toggle('active', m === 'full');
+  document.getElementById('subject-card').style.display = m === 'full' ? 'block' : 'none';
+  document.getElementById('run-btn').textContent = m === 'full' ? 'Generate listing presentation →' : 'Analyze comps →';
+  document.getElementById('result-section').classList.remove('show');
+  saveSession();
+}
+
+function addComp(data) {
+  compId++;
+  const id = compId;
+  compIds.push(id);
+
+  const el = document.createElement('div');
+  el.className = 'comp-item';
+  el.id = 'comp-' + id;
+  el.innerHTML = `
+    <div class="comp-header">
+      <span class="comp-num">Comp ${compIds.indexOf(id) + 1}</span>
+      <div class="comp-actions">
+        <span class="comp-ppsf" id="ppsf-${id}">—</span>
+        <button class="btn-icon" title="Duplicate" onclick="duplicateComp(${id})">⧉</button>
+        <button class="btn-icon danger" title="Remove" onclick="removeComp(${id})">✕</button>
+      </div>
+    </div>
+    <div class="url-import-row" style="display:none"></div>
+    <button class="paste-toggle" onclick="togglePaste(${id})">+ Auto-fill from Zillow / Redfin</button>
+    <div class="paste-area-wrap" id="paste-wrap-${id}">
+      <p class="paste-hint">Open the listing on Zillow or Redfin → press <strong>Ctrl+A</strong> then <strong>Ctrl+C</strong> to copy all page text → paste it below.</p>
+      <div class="paste-row">
+        <textarea id="c${id}-paste" placeholder="Paste listing page text here..."></textarea>
+        <button class="btn-fetch" id="c${id}-fetch-btn" onclick="parsePaste(${id})">Extract details</button>
+      </div>
+    </div>
+    <div class="fetch-status" id="c${id}-status"></div>
+    <div class="url-divider"><div class="url-divider-line"></div><div class="url-divider-text">or enter manually</div><div class="url-divider-line"></div></div>
+    <div class="field-group cols-2">
+      <div><label>Address</label><input type="text" id="c${id}-addr" placeholder="456 Sunset Blvd, Malibu, CA" value="${data?.address || ''}" oninput="saveSession()" /></div>
+      <div><label>Sale price</label><input type="text" id="c${id}-price" placeholder="$950,000" value="${data?.price || ''}" oninput="calcPPSF(${id}); saveSession();" /></div>
+    </div>
+    <div class="field-group cols-4">
+      <div><label>Sq ft</label><input type="number" id="c${id}-sqft" placeholder="2,100" value="${data?.sqft || ''}" oninput="calcPPSF(${id}); saveSession();" /></div>
+      <div><label>Beds</label><input type="number" id="c${id}-beds" placeholder="3" value="${data?.beds || ''}" oninput="saveSession()" /></div>
+      <div><label>Baths</label><input type="number" id="c${id}-baths" placeholder="2" value="${data?.baths || ''}" oninput="saveSession()" /></div>
+      <div><label>Year built</label><input type="number" id="c${id}-year" placeholder="2001" value="${data?.year || ''}" oninput="saveSession()" /></div>
+    </div>
+    <div class="field-group cols-2">
+      <div><label>Days on market</label><input type="number" id="c${id}-dom" placeholder="22" value="${data?.dom || ''}" oninput="saveSession()" /></div>
+      <div><label>Sale date</label><input type="text" id="c${id}-date" placeholder="March 2025" value="${data?.date || ''}" oninput="saveSession()" /></div>
+    </div>
+    <div class="field-group">
+      <div><label>Notes</label><input type="text" id="c${id}-notes" placeholder="Pool, renovated kitchen, corner lot..." value="${data?.notes || ''}" oninput="saveSession()" /></div>
+    </div>
+  `;
+  document.getElementById('comps-list').appendChild(el);
+  updateCompNumbers();
+  if (data) calcPPSF(id);
+  saveSession();
+}
+
+function removeComp(id) {
+  document.getElementById('comp-' + id)?.remove();
+  compIds = compIds.filter(c => c !== id);
+  updateCompNumbers();
+  saveSession();
+}
+
+function duplicateComp(id) {
+  const data = getCompById(id);
+  addComp(data);
+}
+
+function updateCompNumbers() {
+  compIds.forEach((id, idx) => {
+    const el = document.getElementById('comp-' + id);
+    if (el) el.querySelector('.comp-num').textContent = 'Comp ' + (idx + 1);
+  });
+  const count = compIds.filter(id => document.getElementById('comp-' + id)).length;
+  document.getElementById('comp-count-label').textContent = count + ' comp' + (count !== 1 ? 's' : '');
+}
+
+function calcPPSF(id) {
+  const price = parseFloat((document.getElementById('c'+id+'-price')?.value || '').replace(/[^0-9.]/g, ''));
+  const sqft = parseFloat(document.getElementById('c'+id+'-sqft')?.value || '');
+  const el = document.getElementById('ppsf-' + id);
+  if (el && price && sqft) {
+    el.textContent = '$' + Math.round(price / sqft).toLocaleString() + '/sqft';
+  }
+}
+
+function getCompById(id) {
+  return {
+    address: document.getElementById('c'+id+'-addr')?.value || '',
+    price: document.getElementById('c'+id+'-price')?.value || '',
+    sqft: document.getElementById('c'+id+'-sqft')?.value || '',
+    beds: document.getElementById('c'+id+'-beds')?.value || '',
+    baths: document.getElementById('c'+id+'-baths')?.value || '',
+    year: document.getElementById('c'+id+'-year')?.value || '',
+    dom: document.getElementById('c'+id+'-dom')?.value || '',
+    date: document.getElementById('c'+id+'-date')?.value || '',
+    notes: document.getElementById('c'+id+'-notes')?.value || ''
+  };
+}
+
+function getAllComps() {
+  return compIds
+    .filter(id => document.getElementById('comp-' + id))
+    .map(id => getCompById(id))
+    .filter(c => c.address || c.price);
+}
+
+// CSV Import
+function handleDragOver(e) { e.preventDefault(); document.getElementById('csv-zone').classList.add('dragover'); }
+function handleDragLeave(e) { document.getElementById('csv-zone').classList.remove('dragover'); }
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('csv-zone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) parseCSVFile(file);
+}
+function handleCSV(e) {
+  const file = e.target.files[0];
+  if (file) parseCSVFile(file);
+}
+
+function parseCSVFile(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const text = e.target.result;
+    const lines = text.trim().split('\n');
+    if (lines.length < 2) return alert('CSV appears to be empty.');
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/['"]/g, ''));
+
+    const findCol = (...names) => {
+      for (const n of names) {
+        const i = headers.findIndex(h => h.includes(n));
+        if (i !== -1) return i;
+      }
+      return -1;
+    };
+
+    const cols = {
+      address: findCol('address', 'street', 'location'),
+      price: findCol('price', 'sale price', 'sold'),
+      sqft: findCol('sqft', 'sq ft', 'sq_ft', 'square', 'living area'),
+      beds: findCol('bed', 'br'),
+      baths: findCol('bath', 'ba'),
+      year: findCol('year', 'built'),
+      dom: findCol('dom', 'days on market', 'days'),
+      date: findCol('date', 'sold date', 'close'),
+      notes: findCol('notes', 'remarks', 'description')
+    };
+
+    let added = 0;
+    for (let i = 1; i < lines.length; i++) {
+      const vals = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+      if (!vals.some(v => v)) continue;
+      const get = col => col !== -1 ? vals[col] || '' : '';
+      addComp({
+        address: get(cols.address),
+        price: get(cols.price),
+        sqft: get(cols.sqft),
+        beds: get(cols.beds),
+        baths: get(cols.baths),
+        year: get(cols.year),
+        dom: get(cols.dom),
+        date: get(cols.date),
+        notes: get(cols.notes)
+      });
+      added++;
+    }
+    if (added === 0) alert('No rows could be imported. Check your CSV column headers.');
+    else alert(added + ' comparable' + (added > 1 ? 's' : '') + ' imported successfully.');
+  };
+  reader.readAsText(file);
+}
+
+// Session persistence
+function saveSession() {
+  try {
+    const session = {
+      mode,
+      subject: {
+        address: document.getElementById('sub-address')?.value || '',
+        price: document.getElementById('sub-price')?.value || '',
+        sqft: document.getElementById('sub-sqft')?.value || '',
+        beds: document.getElementById('sub-beds')?.value || '',
+        baths: document.getElementById('sub-baths')?.value || '',
+        year: document.getElementById('sub-year')?.value || '',
+        notes: document.getElementById('sub-notes')?.value || ''
+      },
+      comps: compIds.filter(id => document.getElementById('comp-' + id)).map(id => getCompById(id))
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+  } catch(e) {}
+}
+
+function loadSession() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    if (s.mode) setMode(s.mode);
+    if (s.subject) {
+      const f = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+      f('sub-address', s.subject.address); f('sub-price', s.subject.price);
+      f('sub-sqft', s.subject.sqft); f('sub-beds', s.subject.beds);
+      f('sub-baths', s.subject.baths); f('sub-year', s.subject.year);
+      f('sub-notes', s.subject.notes);
+    }
+    if (s.comps?.length) s.comps.forEach(c => addComp(c));
+  } catch(e) {}
+}
+
+function clearAll() {
+  if (!confirm('Clear all data and start fresh?')) return;
+  compIds.slice().forEach(id => removeComp(id));
+  ['sub-address','sub-price','sub-sqft','sub-beds','sub-baths','sub-year','sub-notes'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('result-section').classList.remove('show');
+  localStorage.removeItem(STORAGE_KEY);
+}
+
+// AI Analysis
+async function runAnalysis() {
+  const comps = getAllComps();
+  if (comps.length === 0) { alert('Please add at least one comparable sale.'); return; }
+
+  document.getElementById('result-section').classList.add('show');
+  document.getElementById('loading-card').style.display = 'block';
+  document.getElementById('result-cards').style.display = 'none';
+  document.getElementById('run-btn').disabled = true;
+
+  const msgs = ['Analyzing comparables...', 'Calculating price per sq ft...', 'Generating insights...'];
+  let mi = 0;
+  const msgEl = document.getElementById('loading-msg');
+  const msgInterval = setInterval(() => { mi = (mi+1) % msgs.length; msgEl.textContent = msgs[mi]; }, 1800);
+
+  const isFullMode = mode === 'full';
+  let subjectInfo = '';
+  if (isFullMode) {
+    subjectInfo = `SUBJECT PROPERTY:
+Address: ${document.getElementById('sub-address').value}
+Target list price: ${document.getElementById('sub-price').value}
+Sq ft: ${document.getElementById('sub-sqft').value} | Beds: ${document.getElementById('sub-beds').value} | Baths: ${document.getElementById('sub-baths').value} | Year built: ${document.getElementById('sub-year').value}
+Notes: ${document.getElementById('sub-notes').value}
+`;
+  }
+
+  const compsText = comps.map((c, i) => {
+    const price = parseFloat(c.price.replace(/[^0-9.]/g, ''));
+    const sqft = parseFloat(c.sqft);
+    const ppsf = price && sqft ? Math.round(price/sqft) : null;
+    return `Comp ${i+1}: ${c.address}
+  Sale price: ${c.price}${ppsf ? ' ($'+ppsf+'/sqft)' : ''} | Sq ft: ${c.sqft} | Beds: ${c.beds} | Baths: ${c.baths}${c.year ? ' | Year: '+c.year : ''}
+  Days on market: ${c.dom || 'N/A'} | Sale date: ${c.date || 'N/A'}
+  Notes: ${c.notes || 'None'}`;
+  }).join('\n\n');
+
+  const prompt = isFullMode
+    ? `You are a professional real estate analyst helping an agent prepare a Comparative Market Analysis for a client listing presentation.
+
+${subjectInfo}
+
+COMPARABLE SALES:
+${compsText}
+
+Provide a complete CMA. Return ONLY valid JSON, no markdown, no preamble:
+{
+  "priceLow": <number, no commas>,
+  "priceMid": <number, no commas>,
+  "priceHigh": <number, no commas>,
+  "insights": ["insight 1", "insight 2", "insight 3", "insight 4"],
+  "narrative": "3 professional paragraphs suitable for a seller presentation. Explain the pricing recommendation clearly, reference the comps, and give the seller confidence. Warm but authoritative tone. Separate paragraphs with \\n\\n."
+}`
+    : `You are a professional real estate analyst. Analyze these comparable sales and provide pricing guidance.
+
+COMPARABLE SALES:
+${compsText}
+
+Return ONLY valid JSON, no markdown, no preamble:
+{
+  "priceLow": <number, no commas>,
+  "priceMid": <number, no commas>,
+  "priceHigh": <number, no commas>,
+  "insights": ["insight 1", "insight 2", "insight 3", "insight 4"],
+  "narrative": "2 paragraphs: first summarizes what the comps reveal about pricing, second gives practical pricing strategy advice. Separate with \\n\\n."
+}`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    clearInterval(msgInterval);
+    const data = await resp.json();
+    const text = data.content.map(b => b.text || '').join('');
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    document.getElementById('loading-card').style.display = 'none';
+    document.getElementById('result-cards').style.display = 'block';
+
+    document.getElementById('price-grid').innerHTML = `
+      <div class="price-cell">
+        <div class="price-cell-label">Conservative low</div>
+        <div class="price-cell-val">$${Math.round(parsed.priceLow).toLocaleString()}</div>
+      </div>
+      <div class="price-cell featured">
+        <div class="price-cell-label">Recommended</div>
+        <div class="price-cell-val">$${Math.round(parsed.priceMid).toLocaleString()}</div>
+      </div>
+      <div class="price-cell">
+        <div class="price-cell-label">Optimistic high</div>
+        <div class="price-cell-val">$${Math.round(parsed.priceHigh).toLocaleString()}</div>
+      </div>
+    `;
+
+    const insightsList = document.getElementById('insights-list');
+    insightsList.innerHTML = '';
+    const insights = Array.isArray(parsed.insights) ? parsed.insights : (parsed.insights || '').split('\n').filter(Boolean);
+    insights.forEach(ins => {
+      const li = document.createElement('li');
+      li.textContent = ins.replace(/^[•\-\*]\s*/, '');
+      insightsList.appendChild(li);
+    });
+
+    document.getElementById('narrative-title').textContent = isFullMode ? 'Client presentation narrative' : 'Analysis summary';
+    const narrativeEl = document.getElementById('narrative-text');
+    narrativeEl.innerHTML = '';
+    (parsed.narrative || '').split('\n\n').filter(Boolean).forEach(para => {
+      const p = document.createElement('p');
+      p.textContent = para;
+      narrativeEl.appendChild(p);
+    });
+
+    document.getElementById('print-date').textContent = 'Generated ' + new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+    document.getElementById('result-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  } catch(err) {
+    clearInterval(msgInterval);
+    document.getElementById('loading-card').style.display = 'none';
+    document.getElementById('result-cards').style.display = 'block';
+    document.getElementById('price-grid').innerHTML = '<p style="color:var(--red);font-size:13px;">Something went wrong. Please try again.</p>';
+    console.error(err);
+  }
+
+  document.getElementById('run-btn').disabled = false;
+}
+
+function copyNarrative() {
+  const text = Array.from(document.querySelectorAll('#narrative-text p')).map(p => p.textContent).join('\n\n');
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy narrative', 2000);
+  });
+}
+
+// Paste import
+function togglePaste(id) {
+  const wrap = document.getElementById('paste-wrap-' + id);
+  wrap.classList.toggle('open');
+  const btn = wrap.previousElementSibling;
+  btn.textContent = wrap.classList.contains('open') ? '− Hide auto-fill' : '+ Auto-fill from Zillow / Redfin';
+}
+
+async function parsePaste(id) {
+  const pasteEl = document.getElementById('c'+id+'-paste');
+  const text = (pasteEl?.value || '').trim();
+  if (text.length < 50) { alert('Paste more text from the listing page first.'); return; }
+
+  const btn = document.getElementById('c'+id+'-fetch-btn');
+  btn.disabled = true;
+  showStatus(id, 'loading', 'Reading listing details...');
+
+  const prompt = `You are a real estate data extractor. Below is text copied from a Zillow or Redfin listing page.
+
+Extract the following fields and return ONLY valid JSON, no markdown, no preamble:
+{
+  "address": "full street address including city and state",
+  "price": "sale or list price as a string like $950,000",
+  "sqft": "square footage as a plain number string like 2100",
+  "beds": "number of bedrooms as a plain number string like 3",
+  "baths": "number of bathrooms as a plain number string like 2.5",
+  "year": "year built as a plain number string like 2005",
+  "dom": "days on market as a plain number string, or empty string if not found",
+  "date": "sold date or listing date as a string like March 2025, or empty string if not found",
+  "notes": "brief summary of property type and standout features, max 100 chars"
+}
+
+If a field cannot be found in the text, use an empty string. Do not guess or invent values.
+
+LISTING TEXT:
+${text.substring(0, 8000)}`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 400,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await resp.json();
+    const raw = data.content.map(b => b.text || '').join('');
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    const fill = (field, val) => {
+      const el = document.getElementById('c'+id+'-'+field);
+      if (el && val) el.value = val;
+    };
+    fill('addr', parsed.address);
+    fill('price', parsed.price);
+    fill('sqft', parsed.sqft);
+    fill('beds', parsed.beds);
+    fill('baths', parsed.baths);
+    fill('year', parsed.year);
+    fill('dom', parsed.dom);
+    fill('date', parsed.date);
+    fill('notes', parsed.notes);
+
+    calcPPSF(id);
+    saveSession();
+
+    const filled = [parsed.address, parsed.price, parsed.sqft, parsed.beds].filter(Boolean).length;
+    if (filled >= 2) {
+      showStatus(id, 'ok', 'Details filled in — review and adjust if anything looks off.');
+      // Collapse the paste area
+      const wrap = document.getElementById('paste-wrap-' + id);
+      wrap.classList.remove('open');
+      wrap.previousElementSibling.textContent = '+ Auto-fill from Zillow / Redfin';
+    } else {
+      showStatus(id, 'err', 'Couldn\'t find enough details. Make sure you copied the full page (Ctrl+A then Ctrl+C).');
+    }
+  } catch(err) {
+    showStatus(id, 'err', 'Something went wrong — try again or fill in manually.');
+    console.error(err);
+  }
+
+  btn.disabled = false;
+}
+
+function showStatus(id, type, msg) {
+  const el = document.getElementById('c'+id+'-status');
+  if (!el) return;
+  el.className = 'fetch-status ' + type;
+  el.textContent = msg;
+}
+
+// Init
+loadSession();
+if (compIds.length === 0) addComp();
+</script>
+</body>
+</html>
