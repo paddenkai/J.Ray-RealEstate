@@ -514,7 +514,7 @@ Data to analyze:
 ${raw.slice(0, 4000)}`;
 
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('https://bitter-feather-8fbf.kai-padden11.workers.dev', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
